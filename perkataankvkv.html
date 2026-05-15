@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KVKV Space Hero - Dual Screen</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Bubblegum+Sans&display=swap');
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #020617;
+            font-family: 'Bubblegum Sans', cursive;
+            color: white;
+            user-select: none;
+        }
+
+        .space-bg {
+            background: radial-gradient(circle at center, #1e293b 0%, #020617 100%);
+            height: 100vh;
+            width: 100vw;
+            position: relative;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.5;
+            animation: twinkle var(--duration) infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* 打地鼠洞穴样式 */
+        .hole {
+            width: 100px;
+            height: 35px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 2px solid #334155;
+            border-radius: 50%;
+            position: relative;
+            box-shadow: inset 0 5px 15px rgba(0,0,0,0.9);
+        }
+
+        .alien {
+            width: 90px;
+            height: 90px;
+            position: absolute;
+            bottom: 8px;
+            left: 5px;
+            cursor: pointer;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transform: translateY(120%);
+            z-index: 5;
+        }
+
+        .alien.up {
+            transform: translateY(0%);
+        }
+
+        .alien-body {
+            width: 55px;
+            height: 55px;
+            background: #4ade80;
+            border-radius: 50% 50% 20% 20%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 35px;
+            box-shadow: 0 0 15px rgba(74, 222, 128, 0.4);
+        }
+
+        .word-tag {
+            background: white;
+            color: #0f172a;
+            padding: 1px 8px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-top: 4px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+            white-space: nowrap;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translate(0, 0); }
+            10%, 30%, 50%, 70%, 90% { transform: translate(-8px, 0); }
+            20%, 40%, 60%, 80% { transform: translate(8px, 0); }
+        }
+
+        .shaking {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        .panel-glass {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-glow {
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+            transition: all 0.3s;
+        }
+
+        .btn-glow:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(59, 130, 246, 0.8);
+        }
+
+        .target-card {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            border: 4px solid #60a5fa;
+            box-shadow: 0 0 30px rgba(37, 99, 235, 0.4);
+        }
+    </style>
+</head>
+<body class="space-bg">
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90">
+        <div class="text-center p-12 panel-glass rounded-[3rem] border-2 border-blue-500 max-w-lg w-full mx-4">
+            <h1 class="text-5xl font-bold mb-2 text-blue-400 font-[Orbitron] uppercase tracking-tighter">SPACE KVKV</h1>
+            <p class="text-xl mb-10 text-slate-300">Pukul alien yang membawa perkataan yang betul!</p>
+            <button id="start-btn" class="btn-glow bg-blue-600 px-12 py-5 rounded-full text-3xl font-bold hover:bg-blue-500">MULA</button>
+        </div>
+    </div>
+
+    <!-- Main Game UI (Dual Screen) -->
+    <div id="game-ui" class="hidden h-screen w-full flex flex-row p-4 gap-4">
+        
+        <!-- Left Screen: Instruction & Status -->
+        <div class="w-1/3 flex flex-col gap-4">
+            <div class="panel-glass rounded-3xl p-6 flex flex-col items-center justify-between h-full">
+                <div class="w-full">
+                    <div class="flex justify-between items-center mb-6 font-[Orbitron]">
+                        <div class="text-xl text-blue-300">MARKAH: <span id="score" class="text-white text-3xl">0</span></div>
+                        <div class="flex gap-1" id="hearts">
+                            <span class="text-2xl">❤️</span><span class="text-2xl">❤️</span><span class="text-2xl">❤️</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Target Display -->
+                <div class="flex-1 flex flex-col items-center justify-center w-full">
+                    <p class="text-slate-400 text-lg mb-2 uppercase tracking-widest">Sila Cari:</p>
+                    <div class="target-card w-full py-12 rounded-3xl flex flex-col items-center justify-center mb-6">
+                        <h2 id="target-word" class="text-7xl font-bold text-white mb-4 tracking-tight">---</h2>
+                        <button onclick="repeatTargetVoice()" class="bg-white/20 hover:bg-white/30 p-4 rounded-full transition-colors group">
+                            <span class="text-3xl group-active:scale-90 inline-block">🔊</span>
+                        </button>
+                    </div>
+                    <p class="text-sm text-slate-500 italic">Dengar sebutan dan cari alien yang betul!</p>
+                </div>
+
+                <div class="text-slate-500 text-xs mt-4">Gemini AI TTS Active</div>
+            </div>
+        </div>
+
+        <!-- Right Screen: Whack-a-Mole Area -->
+        <div class="w-2/3 panel-glass rounded-3xl p-8 grid grid-cols-3 grid-rows-3 gap-y-12 items-center justify-items-center" id="play-area">
+            <!-- 9 Holes -->
+            <script>
+                for(let i=0; i<9; i++) {
+                    document.write(`
+                        <div class="relative">
+                            <div class="hole"></div>
+                            <div class="alien" id="alien-${i}" onclick="hit(${i})">
+                                <div class="alien-body">👽</div>
+                                <div class="word-tag">...</div>
+                            </div>
+                        </div>
+                    `);
+                }
+            </script>
+        </div>
+    </div>
+
+    <!-- Game Over -->
+    <div id="over-screen" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/95">
+        <div class="text-center p-10">
+            <div class="text-8xl mb-4">🚀</div>
+            <h2 class="text-6xl text-red-500 font-bold mb-4 font-[Orbitron]">TAMAT!</h2>
+            <p class="text-3xl mb-8">Markah: <span id="final-score">0</span></p>
+            <button onclick="location.reload()" class="bg-blue-600 px-12 py-4 rounded-full text-2xl font-bold hover:bg-blue-500">Main Lagi</button>
+        </div>
+    </div>
+
+    <script>
+        const apiKey = ""; // 由环境提供
+        const wordList = [
+            "buku", "bola", "roti", "kaki", "bapa", "mama", "meja", "topi", "sudu", "gula",
+            "paku", "lori", "feri", "jari", "baju", "dadu", "guli", "kayu", "labu", "nasi",
+            "padi", "raga", "sawi", "tali", "ungu", "teko", "beca", "ceri", "jeti", "foto"
+        ];
+
+        let score = 0;
+        let hearts = 3;
+        let currentTarget = "";
+        let gameActive = false;
+        let roundTimer;
+
+        // --- 星空生成 ---
+        function createStars() {
+            const body = document.body;
+            for (let i = 0; i < 80; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                const size = Math.random() * 2 + 1 + 'px';
+                star.style.width = size;
+                star.style.height = size;
+                star.style.left = Math.random() * 100 + 'vw';
+                star.style.top = Math.random() * 100 + 'vh';
+                star.style.setProperty('--duration', (Math.random() * 3 + 2) + 's');
+                body.appendChild(star);
+            }
+        }
+
+        // --- 核心语音逻辑 ---
+        async function playTTS(text) {
+            try {
+                // 强制指定 Kore 声线 (女生)
+                const payload = {
+                    contents: [{ parts: [{ text: `Say clearly: ${text}` }] }],
+                    generationConfig: {
+                        responseModalities: ["AUDIO"],
+                        speechConfig: {
+                            voiceConfig: {
+                                prebuiltVoiceConfig: { voiceName: "Kore" } 
+                            }
+                        }
+                    }
+                };
+
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error('API Error');
+
+                const result = await response.json();
+                const base64Audio = result.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+                
+                if (base64Audio) {
+                    playPCM(base64Audio);
+                } else {
+                    throw new Error('No Data');
+                }
+            } catch (err) {
+                console.warn("AI TTS 失败，切换到本地男声。");
+                localSpeak(text);
+            }
+        }
+
+        function playPCM(base64Data) {
+            const binaryString = atob(base64Data);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) { bytes[i] = binaryString.charCodeAt(i); }
+            const wavBuffer = createWavHeader(bytes.buffer, 24000);
+            const blob = new Blob([wavBuffer], { type: 'audio/wav' });
+            new Audio(URL.createObjectURL(blob)).play();
+        }
+
+        function createWavHeader(pcmData, sampleRate) {
+            const buffer = new ArrayBuffer(44 + pcmData.byteLength);
+            const view = new DataView(buffer);
+            const writeString = (o, s) => { for (let i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); };
+            writeString(0, 'RIFF');
+            view.setUint32(4, 32 + pcmData.byteLength, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, 1, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeString(36, 'data');
+            view.setUint32(40, pcmData.byteLength, true);
+            new Uint8Array(buffer, 44).set(new Uint8Array(pcmData));
+            return buffer;
+        }
+
+        function localSpeak(text) {
+            const msg = new SpeechSynthesisUtterance(text);
+            msg.lang = 'ms-MY';
+            const voices = window.speechSynthesis.getVoices();
+            // 尝试寻找男声 (David, Mark, etc.)
+            const maleVoice = voices.find(v => v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('david') || v.name.toLowerCase().includes('google'));
+            if(maleVoice) msg.voice = maleVoice;
+            window.speechSynthesis.speak(msg);
+        }
+
+        // --- 游戏流程 ---
+        function startGame() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('game-ui').classList.remove('flex', 'hidden');
+            document.getElementById('game-ui').style.display = 'flex';
+            score = 0;
+            hearts = 3;
+            gameActive = true;
+            createStars();
+            updateUI();
+            nextRound();
+        }
+
+        function nextRound() {
+            if (!gameActive) return;
+
+            // 清理
+            document.querySelectorAll('.alien').forEach(a => {
+                a.classList.remove('up');
+                a.querySelector('.alien-body').innerText = ["👽","🛸","👾","🤖","🐙"][Math.floor(Math.random()*5)];
+            });
+
+            // 选词
+            currentTarget = wordList[Math.floor(Math.random() * wordList.length)];
+            document.getElementById('target-word').innerText = currentTarget;
+            playTTS(currentTarget);
+
+            // 填充 9 个洞
+            let options = [currentTarget];
+            while(options.length < 9) {
+                let r = wordList[Math.floor(Math.random() * wordList.length)];
+                if(!options.includes(r)) options.push(r);
+            }
+            options = options.sort(() => Math.random() - 0.5);
+
+            // 延迟出洞
+            setTimeout(() => {
+                options.forEach((w, i) => {
+                    const alien = document.getElementById(`alien-${i}`);
+                    alien.querySelector('.word-tag').innerText = w;
+                    alien.dataset.word = w;
+                    alien.classList.add('up');
+                });
+            }, 600);
+
+            // 计时：如果 6 秒没动，自动换词
+            clearTimeout(roundTimer);
+            roundTimer = setTimeout(() => { if(gameActive) nextRound(); }, 6000);
+        }
+
+        function hit(idx) {
+            if (!gameActive) return;
+            const el = document.getElementById(`alien-${idx}`);
+            if (!el.classList.contains('up')) return;
+
+            const picked = el.dataset.word;
+            el.classList.remove('up');
+
+            if (picked === currentTarget) {
+                score += 10;
+                el.querySelector('.alien-body').innerText = "⭐";
+                updateUI();
+                clearTimeout(roundTimer);
+                setTimeout(nextRound, 300);
+            } else {
+                hearts--;
+                document.getElementById('play-area').classList.add('shaking');
+                setTimeout(() => document.getElementById('play-area').classList.remove('shaking'), 400);
+                updateUI();
+                if (hearts <= 0) endGame();
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('score').innerText = score;
+            document.getElementById('hearts').innerHTML = "❤️".repeat(hearts);
+        }
+
+        function repeatTargetVoice() {
+            if(currentTarget) playTTS(currentTarget);
+        }
+
+        function endGame() {
+            gameActive = false;
+            clearTimeout(roundTimer);
+            document.getElementById('over-screen').classList.remove('hidden');
+            document.getElementById('final-score').innerText = score;
+        }
+
+        document.getElementById('start-btn').onclick = startGame;
+        // 预触发浏览器语音系统
+        window.speechSynthesis.getVoices();
+    </script>
+</body>
+</html>
