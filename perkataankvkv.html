@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KVKV Space Hero - Dual Screen</title>
+    <title>KVKV Space Hero - Leaderboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Bubblegum+Sans&display=swap');
@@ -37,7 +37,7 @@
             50% { opacity: 1; }
         }
 
-        /* 打地鼠洞穴样式 */
+        /* 地鼠洞穴样式 */
         .hole {
             width: 100px;
             height: 35px;
@@ -122,23 +122,36 @@
             border: 4px solid #60a5fa;
             box-shadow: 0 0 30px rgba(37, 99, 235, 0.4);
         }
+
+        /* 隐藏滚动条 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
     </style>
 </head>
 <body class="space-bg">
 
-    <!-- Start Screen -->
+    <!-- 开始界面 -->
     <div id="start-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90">
         <div class="text-center p-12 panel-glass rounded-[3rem] border-2 border-blue-500 max-w-lg w-full mx-4">
             <h1 class="text-5xl font-bold mb-2 text-blue-400 font-[Orbitron] uppercase tracking-tighter">SPACE KVKV</h1>
-            <p class="text-xl mb-10 text-slate-300">Pukul alien yang membawa perkataan yang betul!</p>
-            <button id="start-btn" class="btn-glow bg-blue-600 px-12 py-5 rounded-full text-3xl font-bold hover:bg-blue-500">MULA</button>
+            <p class="text-xl mb-6 text-slate-300">Pukul alien yang membawa perkataan yang betul!</p>
+            <div id="auth-status" class="text-sm text-yellow-400 mb-6 font-[Orbitron]">Menyambung ke satelit (Memuatkan)...</div>
+            <button id="start-btn" disabled class="btn-glow bg-slate-600 px-12 py-5 rounded-full text-3xl font-bold cursor-not-allowed opacity-50">SILA TUNGGU</button>
         </div>
     </div>
 
-    <!-- Main Game UI (Dual Screen) -->
+    <!-- 核心游戏界面 (双屏) -->
     <div id="game-ui" class="hidden h-screen w-full flex flex-row p-4 gap-4">
         
-        <!-- Left Screen: Instruction & Status -->
+        <!-- 左边屏幕：指令与状态 -->
         <div class="w-1/3 flex flex-col gap-4">
             <div class="panel-glass rounded-3xl p-6 flex flex-col items-center justify-between h-full">
                 <div class="w-full">
@@ -150,7 +163,7 @@
                     </div>
                 </div>
 
-                <!-- Target Display -->
+                <!-- 目标词汇展示 -->
                 <div class="flex-1 flex flex-col items-center justify-center w-full">
                     <p class="text-slate-400 text-lg mb-2 uppercase tracking-widest">Sila Cari:</p>
                     <div class="target-card w-full py-12 rounded-3xl flex flex-col items-center justify-center mb-6">
@@ -162,13 +175,13 @@
                     <p class="text-sm text-slate-500 italic">Dengar sebutan dan cari alien yang betul!</p>
                 </div>
 
-                <div class="text-slate-500 text-xs mt-4">Gemini AI TTS Active</div>
+                <div class="text-slate-500 text-xs mt-4">Satelit cloud: Aktif ✅</div>
             </div>
         </div>
 
-        <!-- Right Screen: Whack-a-Mole Area -->
+        <!-- 右边屏幕：九宫格地鼠区域 -->
         <div class="w-2/3 panel-glass rounded-3xl p-8 grid grid-cols-3 grid-rows-3 gap-y-12 items-center justify-items-center" id="play-area">
-            <!-- 9 Holes -->
+            <!-- 9 个地鼠洞 -->
             <script>
                 for(let i=0; i<9; i++) {
                     document.write(`
@@ -185,18 +198,188 @@
         </div>
     </div>
 
-    <!-- Game Over -->
-    <div id="over-screen" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/95">
-        <div class="text-center p-10">
-            <div class="text-8xl mb-4">🚀</div>
-            <h2 class="text-6xl text-red-500 font-bold mb-4 font-[Orbitron]">TAMAT!</h2>
-            <p class="text-3xl mb-8">Markah: <span id="final-score">0</span></p>
-            <button onclick="location.reload()" class="bg-blue-600 px-12 py-4 rounded-full text-2xl font-bold hover:bg-blue-500">Main Lagi</button>
+    <!-- 游戏结束与上传成绩/排行榜界面 -->
+    <div id="over-screen" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-6 overflow-y-auto">
+        <div class="max-w-4xl w-full flex flex-col md:flex-row gap-8 bg-slate-900/90 p-8 rounded-[2.5rem] border-2 border-blue-500 backdrop-blur-lg">
+            
+            <!-- 左侧：个人成绩与上传 -->
+            <div class="md:w-1/2 flex flex-col justify-center items-center text-center p-4 border-r border-slate-700/50">
+                <div class="text-6xl mb-2">🚀</div>
+                <h2 class="text-4xl text-red-500 font-bold mb-2 font-[Orbitron]">TAMAT!</h2>
+                <p class="text-xl text-slate-400">Tahniah atas usaha anda!</p>
+                <div class="my-6">
+                    <p class="text-sm text-slate-400">Markah Anda</p>
+                    <p class="text-6xl font-bold text-yellow-400 font-[Orbitron]" id="final-score">0</p>
+                </div>
+
+                <!-- 上传成绩输入框 -->
+                <div id="upload-box" class="w-full max-w-xs mb-6">
+                    <input type="text" id="player-name" maxlength="15" placeholder="Masukkan Nama Anda (输入名字)" 
+                        class="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-600 text-white text-center text-lg focus:outline-none focus:border-blue-500 mb-3">
+                    <button id="submit-score-btn" onclick="uploadScore()" class="w-full bg-green-600 hover:bg-green-500 py-3 rounded-xl font-bold text-lg transition-all btn-glow">
+                        Hantar Markah (保存分数)
+                    </button>
+                </div>
+                <p id="upload-status" class="text-sm text-green-400 hidden">Markah berjaya disimpan! 🎉</p>
+
+                <button onclick="location.reload()" class="mt-4 text-blue-400 hover:underline">Main Semula (重新玩)</button>
+            </div>
+
+            <!-- 右侧：实时云端排行榜 -->
+            <div class="md:w-1/2 flex flex-col p-4">
+                <h3 class="text-2xl font-bold text-blue-400 font-[Orbitron] mb-4 text-center border-b border-blue-500/30 pb-2 flex items-center justify-center gap-2">
+                    🏆 CARTA PENDAHULU (TOP 10)
+                </h3>
+                <div class="flex-1 overflow-y-auto max-h-[300px] pr-2" id="leaderboard-list">
+                    <div class="text-center text-slate-500 py-8">Memuatkan senarai...</div>
+                </div>
+            </div>
+
         </div>
     </div>
 
+    <!-- 引入 Firebase SDK (严格版本保持一致) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDocs, collection, query, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // 全局配置与初始化
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        let currentUser = null;
+
+        // --- 规则 3: 优先登录后进行操作 ---
+        async function initAuth() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Auth Error: ", error);
+                document.getElementById('auth-status').innerText = "Ralat Sambungan. Sila muat semula.";
+            }
+        }
+
+        // 监听登录状态
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('auth-status').innerText = "Satelit Berjaya Disambung! 🛰️";
+                const startBtn = document.getElementById('start-btn');
+                startBtn.disabled = false;
+                startBtn.classList.remove('bg-slate-600', 'cursor-not-allowed', 'opacity-50');
+                startBtn.classList.add('bg-blue-600', 'hover:bg-blue-500');
+                startBtn.innerText = "MULA";
+                
+                // 预先拉取排行榜
+                fetchLeaderboard();
+            }
+        });
+
+        // 初始化鉴权
+        initAuth();
+
+        // --- 规则 1 & 2: 严格路径，无复杂查询在内存中排序 ---
+        async function fetchLeaderboard() {
+            if (!currentUser) return;
+            const listContainer = document.getElementById('leaderboard-list');
+            try {
+                // 公共路径: /artifacts/{appId}/public/data/scores
+                const scoresColRef = collection(db, 'artifacts', appId, 'public', 'data', 'scores');
+                const querySnapshot = await getDocs(scoresColRef);
+                
+                let scoresArray = [];
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    if (data.name && typeof data.score === 'number') {
+                        scoresArray.push(data);
+                    }
+                });
+
+                // 在客户端/内存中进行排序，避开复合查询索引限制 (Rule 2)
+                scoresArray.sort((a, b) => b.score - a.score);
+                const top10 = scoresArray.slice(0, 10);
+
+                // 渲染排行榜
+                if (top10.length === 0) {
+                    listContainer.innerHTML = `<div class="text-center text-slate-500 py-8">Tiada rekod lagi. Jadilah yang pertama!</div>`;
+                    return;
+                }
+
+                let html = "";
+                top10.forEach((item, index) => {
+                    const medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `${index + 1}.`;
+                    const isTop3 = index < 3;
+                    html += `
+                        <div class="flex justify-between items-center bg-slate-800/50 p-3 rounded-xl mb-2 border ${isTop3 ? 'border-yellow-500/30' : 'border-slate-700/50'}">
+                            <div class="flex items-center gap-3">
+                                <span class="text-xl font-bold font-[Orbitron] ${isTop3 ? 'text-yellow-400' : 'text-slate-400'}">${medal}</span>
+                                <span class="text-lg font-semibold tracking-wide">${item.name}</span>
+                            </div>
+                            <span class="text-xl font-bold text-blue-400 font-[Orbitron]">${item.score} pts</span>
+                        </div>
+                    `;
+                });
+                listContainer.innerHTML = html;
+
+            } catch (error) {
+                console.error("Fetch Leaderboard Error: ", error);
+                listContainer.innerHTML = `<div class="text-center text-red-400 py-8">Gagal memuatkan排行榜.</div>`;
+            }
+        }
+
+        async function uploadScore() {
+            if (!currentUser) return;
+            const nameInput = document.getElementById('player-name');
+            const name = nameInput.value.trim();
+            const scoreVal = parseInt(document.getElementById('final-score').innerText) || 0;
+
+            if (!name) {
+                alert("Sila masukkan nama anda!"); // 注意：此处在iframe中会正常运行，但为了最佳体验我们直接提示
+                nameInput.focus();
+                return;
+            }
+
+            const btn = document.getElementById('submit-score-btn');
+            btn.disabled = true;
+            btn.innerText = "Menghantar...";
+
+            try {
+                const scoresColRef = collection(db, 'artifacts', appId, 'public', 'data', 'scores');
+                await addDoc(scoresColRef, {
+                    name: name,
+                    score: scoreVal,
+                    timestamp: Date.now(),
+                    userId: currentUser.uid // 展示完整的 userId
+                });
+
+                document.getElementById('upload-box').classList.add('hidden');
+                document.getElementById('upload-status').classList.remove('hidden');
+
+                // 重新刷新列表
+                await fetchLeaderboard();
+            } catch (error) {
+                console.error("Upload Error: ", error);
+                btn.disabled = false;
+                btn.innerText = "Cuba Lagi";
+            }
+        }
+
+        // 将方法挂载到 window 作用域，以便 HTML 的 onclick 属性能访问
+        window.uploadScore = uploadScore;
+        window.fetchLeaderboard = fetchLeaderboard;
+
+    </script>
+
     <script>
-        const apiKey = ""; // 由环境提供
+        const apiKey = ""; // 运行时由环境提供
         const wordList = [
             "buku", "bola", "roti", "kaki", "bapa", "mama", "meja", "topi", "sudu", "gula",
             "paku", "lori", "feri", "jari", "baju", "dadu", "guli", "kayu", "labu", "nasi",
@@ -225,10 +408,9 @@
             }
         }
 
-        // --- 核心语音逻辑 ---
+        // --- 核心发音逻辑（Gemini + 本地兜底） ---
         async function playTTS(text) {
             try {
-                // 强制指定 Kore 声线 (女生)
                 const payload = {
                     contents: [{ parts: [{ text: `Say clearly: ${text}` }] }],
                     generationConfig: {
@@ -298,13 +480,12 @@
             const msg = new SpeechSynthesisUtterance(text);
             msg.lang = 'ms-MY';
             const voices = window.speechSynthesis.getVoices();
-            // 尝试寻找男声 (David, Mark, etc.)
             const maleVoice = voices.find(v => v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('david') || v.name.toLowerCase().includes('google'));
             if(maleVoice) msg.voice = maleVoice;
             window.speechSynthesis.speak(msg);
         }
 
-        // --- 游戏流程 ---
+        // --- 游戏主循环 ---
         function startGame() {
             document.getElementById('start-screen').classList.add('hidden');
             document.getElementById('game-ui').classList.remove('flex', 'hidden');
@@ -320,18 +501,15 @@
         function nextRound() {
             if (!gameActive) return;
 
-            // 清理
             document.querySelectorAll('.alien').forEach(a => {
                 a.classList.remove('up');
                 a.querySelector('.alien-body').innerText = ["👽","🛸","👾","🤖","🐙"][Math.floor(Math.random()*5)];
             });
 
-            // 选词
             currentTarget = wordList[Math.floor(Math.random() * wordList.length)];
             document.getElementById('target-word').innerText = currentTarget;
             playTTS(currentTarget);
 
-            // 填充 9 个洞
             let options = [currentTarget];
             while(options.length < 9) {
                 let r = wordList[Math.floor(Math.random() * wordList.length)];
@@ -339,7 +517,6 @@
             }
             options = options.sort(() => Math.random() - 0.5);
 
-            // 延迟出洞
             setTimeout(() => {
                 options.forEach((w, i) => {
                     const alien = document.getElementById(`alien-${i}`);
@@ -349,7 +526,6 @@
                 });
             }, 600);
 
-            // 计时：如果 6 秒没动，自动换词
             clearTimeout(roundTimer);
             roundTimer = setTimeout(() => { if(gameActive) nextRound(); }, 6000);
         }
@@ -389,12 +565,19 @@
         function endGame() {
             gameActive = false;
             clearTimeout(roundTimer);
+            document.getElementById('game-ui').style.display = 'none';
             document.getElementById('over-screen').classList.remove('hidden');
             document.getElementById('final-score').innerText = score;
+            
+            // 游戏结束时自动拉取最新排行榜
+            if (window.fetchLeaderboard) {
+                window.fetchLeaderboard();
+            }
         }
 
         document.getElementById('start-btn').onclick = startGame;
-        // 预触发浏览器语音系统
+        window.repeatTargetVoice = repeatTargetVoice;
+        window.hit = hit;
         window.speechSynthesis.getVoices();
     </script>
 </body>
