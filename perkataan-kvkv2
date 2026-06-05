@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KVKV Space Dino Challenge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { margin: 0; background: #020617; color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; touch-action: manipulation; }
+        
+        .float-move { animation: float-sway 4s ease-in-out infinite; }
+        @keyframes float-sway {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(5deg); }
+        }
+
+        .laser { position: absolute; background: #fbbf24; height: 8px; border-radius: 4px; z-index: 40; pointer-events: none; transform-origin: left center; box-shadow: 0 0 20px #fbbf24; }
+        .explosion { position: absolute; font-size: 80px; z-index: 50; pointer-events: none; animation: pop 0.6s ease-out forwards; font-weight: bold; }
+        @keyframes pop { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(2.5); opacity: 0; } }
+        
+        .shake { animation: shake 0.5s; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-20px); } 75% { transform: translateX(20px); } }
+
+        .chest-box { 
+            width: 140px; height: 140px; 
+            cursor: pointer; transition: all 0.3s ease; 
+            display: flex; align-items: center; justify-content: center; 
+            border-radius: 1.5rem; 
+            background: #1e293b; 
+            border: 2px solid #eab308;
+            font-weight: 900; font-size: 2.5rem;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            flex-shrink: 0;
+        }
+        .chest-box:hover { transform: scale(1.05); border-color: #fde047; }
+        
+        #start-overlay, #end-overlay { position: fixed; inset: 0; z-index: 200; background: #020617; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        #end-overlay { display: none; background: rgba(2, 6, 23, 0.98); }
+        #bonus-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(2, 6, 23, 0.98); display: none; }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col">
+
+    <div id="start-overlay">
+        <h1 class="text-7xl font-black text-yellow-500 mb-10 text-center uppercase tracking-tighter">KVKV SPACE DINO</h1>
+        <button onclick="startGame()" class="bg-blue-600 hover:bg-blue-500 text-white text-4xl font-bold py-6 px-12 rounded-full border-4 border-white shadow-2xl animate-pulse">
+            MULA BERMAIN
+        </button>
+    </div>
+
+    <!-- 结算界面 -->
+    <div id="end-overlay">
+        <h1 class="text-6xl font-black text-yellow-500 mb-12 uppercase">Permainan Tamat!</h1>
+        <div class="flex gap-20 mb-16">
+            <div class="text-center">
+                <h2 class="text-3xl text-blue-400 font-bold mb-4">Kumpulan A</h2>
+                <div id="finalScoreA" class="text-9xl font-extrabold text-blue-300">0</div>
+            </div>
+            <div class="text-center">
+                <h2 class="text-3xl text-red-400 font-bold mb-4">Kumpulan B</h2>
+                <div id="finalScoreB" class="text-9xl font-extrabold text-red-300">0</div>
+            </div>
+        </div>
+        <h2 id="winner-text" class="text-6xl font-black text-white mb-12 tracking-wider"></h2>
+        <button onclick="location.reload()" class="bg-yellow-500 hover:bg-yellow-400 text-black text-3xl font-bold py-6 px-12 rounded-full border-4 border-white shadow-2xl">
+            MULAI SEMULA
+        </button>
+    </div>
+
+    <div class="flex justify-between items-center px-10 py-4 bg-slate-900 border-b-4 border-slate-700 h-[20vh]">
+        <div class="text-center w-48">
+            <h2 class="text-blue-400 font-bold text-xl uppercase">Kumpulan A</h2>
+            <div id="scoreA" class="text-6xl font-extrabold text-blue-300">0</div>
+        </div>
+        
+        <div class="text-center bg-slate-800 px-12 py-3 rounded-3xl border-4 border-yellow-500 shadow-[0_0_40px_rgba(234,179,8,0.5)]">
+            <div class="text-xs text-yellow-500 font-bold uppercase tracking-widest mb-2">CARI</div>
+            <div id="target-icon" class="text-8xl">🤔</div>
+        </div>
+
+        <div class="text-center w-48">
+            <h2 class="text-red-400 font-bold text-xl uppercase">Kumpulan B</h2>
+            <div id="scoreB" class="text-6xl font-extrabold text-red-300">0</div>
+        </div>
+    </div>
+
+    <div class="flex-grow flex w-full relative h-[80vh] overflow-hidden">
+        <div id="sideA" class="w-1/2 relative bg-blue-950/20 border-r-4 border-slate-700/50">
+            <div id="dinoA" class="absolute bottom-10 left-10 z-20 flex transition-transform duration-300 ease-out">
+                <span class="text-9xl">🦖</span>
+                <span class="text-6xl mt-12 -ml-6">🔫</span>
+            </div>
+        </div>
+        <div id="sideB" class="w-1/2 relative bg-red-950/20">
+            <div id="dinoB" class="absolute bottom-10 right-10 z-20 flex flex-row-reverse transition-transform duration-300 ease-out">
+                <span class="text-9xl scale-x-[-1]">🦕</span>
+                <span class="text-6xl mt-12 -mr-6 scale-x-[-1]">🔫</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="bonus-overlay">
+        <div class="flex w-full h-full">
+            <div class="w-1/2 flex flex-col items-center justify-center border-r-4 border-slate-800">
+                <h2 class="text-5xl font-bold text-blue-400 mb-10">Kumpulan A</h2>
+                <div class="flex flex-wrap gap-8 justify-center" id="chestsA">
+                    <div class="chest-box" onclick="pickChest('A', this, 0)">🎁</div>
+                    <div class="chest-box" onclick="pickChest('A', this, 1)">🎁</div>
+                    <div class="chest-box" onclick="pickChest('A', this, 2)">🎁</div>
+                </div>
+            </div>
+            <div class="w-1/2 flex flex-col items-center justify-center">
+                <h2 class="text-5xl font-bold text-red-400 mb-10">Kumpulan B</h2>
+                <div class="flex flex-wrap gap-8 justify-center" id="chestsB">
+                    <div class="chest-box" onclick="pickChest('B', this, 0)">🎁</div>
+                    <div class="chest-box" onclick="pickChest('B', this, 1)">🎁</div>
+                    <div class="chest-box" onclick="pickChest('B', this, 2)">🎁</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Audio Engine ---
+        let audioCtx;
+        function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+        
+        function playSound(type) {
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            if(type === 'shoot') { osc.type = 'square'; osc.frequency.setValueAtTime(440, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.2, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1); osc.start(); osc.stop(audioCtx.currentTime + 0.1); }
+            else if(type === 'correct') { osc.type = 'sine'; osc.frequency.setValueAtTime(600, audioCtx.currentTime); osc.frequency.setValueAtTime(800, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.3, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2); osc.start(); osc.stop(audioCtx.currentTime + 0.2); }
+        }
+
+        function startBGM() {
+            setInterval(() => {
+                if (audioCtx?.state === 'running') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(80, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+                }
+            }, 600);
+        }
+
+        // --- Game Logic ---
+        const wordsData = [{w: "susu", i: "🥛"}, {w: "raja", i: "👑"}, {w: "feri", i: "⛴️"}, {w: "buku", i: "📚"}, {w: "sudu", i: "🥄"}, {w: "topi", i: "🧢"}, {w: "nasi", i: "🍚"}, {w: "cili", i: "🌶️"}, {w: "bola", i: "⚽"}, {w: "dadu", i: "🎲"}, {w: "baju", i: "👕"}, {w: "tali", i: "🧶"}, {w: "gigi", i: "🦷"}, {w: "bata", i: "🧱"}, {w: "sofa", i: "🛋️"}, {w: "kopi", i: "☕"}, {w: "roti", i: "🍞"}, {w: "kaki", i: "👣"}, {w: "mata", i: "👁️"}, {w: "jari", i: "🖐️"}, {w: "tisu", i: "🧻"}];
+        let scores = {A: 0, B: 0};
+        let picked = {A: false, B: false};
+        let gameQueue = [...wordsData].sort(() => Math.random() - 0.5);
+        let currentTarget = null;
+        let correctCount = 0;
+
+        function startGame() {
+            initAudio();
+            startBGM();
+            document.getElementById('start-overlay').style.display = 'none';
+            spawnRound();
+        }
+
+        function spawnRound() {
+            if(gameQueue.length === 0) {
+                document.getElementById('end-overlay').style.display = 'flex';
+                document.getElementById('finalScoreA').innerText = scores.A;
+                document.getElementById('finalScoreB').innerText = scores.B;
+                let winner = scores.A > scores.B ? "KUMPULAN A MENANG!" : (scores.B > scores.A ? "KUMPULAN B MENANG!" : "SERI!");
+                document.getElementById('winner-text').innerText = winner;
+                return;
+            }
+            currentTarget = gameQueue.pop();
+            document.getElementById('target-icon').innerText = currentTarget.i;
+            let options = [currentTarget];
+            while(options.length < 5) {
+                const r = wordsData[Math.floor(Math.random() * wordsData.length)];
+                if(!options.find(o => o.w === r.w)) options.push(r);
+            }
+            options.sort(() => Math.random() - 0.5);
+            renderShips('sideA', options, 'A');
+            renderShips('sideB', options, 'B');
+        }
+
+        function renderShips(containerId, options, team) {
+            const container = document.getElementById(containerId);
+            container.querySelectorAll('.ship-obj').forEach(s => s.remove());
+            const positions = [{top: 10, left: 10}, {top: 10, left: 70}, {top: 25, left: 40}, {top: 40, left: 15}, {top: 40, left: 75}];
+            options.forEach((obj, idx) => {
+                const ship = document.createElement('div');
+                ship.className = 'ship-obj absolute float-move flex flex-col items-center cursor-pointer p-4 z-10';
+                ship.style.left = positions[idx].left + '%';
+                ship.style.top = positions[idx].top + '%';
+                const icon = ['🚀', '🛸', '🛰️'][Math.floor(Math.random()*3)];
+                ship.innerHTML = `<div class="text-7xl">${icon}</div><div class="bg-slate-900 text-white px-6 py-2 rounded-2xl text-2xl font-bold border-4 border-yellow-500 mt-2 shadow-lg">${obj.w}</div>`;
+                ship.onclick = () => handleHit(team, obj.w, ship);
+                container.appendChild(ship);
+            });
+        }
+
+        function handleHit(team, word, shipEl) {
+            playSound('shoot');
+            const dino = document.getElementById(team === 'A' ? 'dinoA' : 'dinoB');
+            const dRect = dino.getBoundingClientRect();
+            const sRect = shipEl.getBoundingClientRect();
+            const angle = Math.atan2(sRect.top - dRect.top, sRect.left - dRect.left) * 180 / Math.PI;
+            dino.style.transform = `rotate(${team === 'A' ? angle/3 : -angle/3}deg)`;
+            const laser = document.createElement('div');
+            laser.className = 'laser';
+            laser.style.left = (dRect.left + dRect.width/2) + 'px';
+            laser.style.top = (dRect.top + dRect.height/2) + 'px';
+            laser.style.transform = `rotate(${angle}deg)`;
+            laser.style.width = Math.hypot(sRect.left - dRect.left, sRect.top - dRect.top) + 'px';
+            document.body.appendChild(laser);
+            setTimeout(() => {
+                dino.style.transform = `rotate(0deg)`;
+                laser.remove();
+                if (word === currentTarget.w) {
+                    playSound('correct');
+                    scores[team] += 20;
+                    correctCount++;
+                    showExplosion(sRect.left, sRect.top, '✨ +20');
+                    if (correctCount % 3 === 0) {
+                        picked = {A: false, B: false};
+                        document.getElementById('bonus-overlay').style.display = 'flex';
+                    } else { spawnRound(); }
+                } else {
+                    scores[team] = Math.max(0, scores[team] - 10);
+                    document.body.classList.add('shake');
+                    setTimeout(() => document.body.classList.remove('shake'), 500);
+                    showExplosion(sRect.left, sRect.top, '💥 -10');
+                }
+                document.getElementById('scoreA').innerText = scores.A;
+                document.getElementById('scoreB').innerText = scores.B;
+            }, 300);
+        }
+
+        function pickChest(team, el, idx) {
+            if (picked[team]) return;
+            picked[team] = true;
+            const effects = ['double', 'minus', 'steal'];
+            const effect = effects[Math.floor(Math.random() * effects.length)];
+            let label = "";
+            if (effect === 'double') { scores[team] *= 2; label = "Double!"; }
+            else if (effect === 'minus') { scores[team] = Math.max(0, scores[team] - 10); label = "Oops -10"; }
+            else { const other = team === 'A' ? 'B' : 'A'; scores[team] += scores[other]; scores[other] = 0; label = "Steal!"; }
+            el.innerHTML = `<span class="text-xl font-black leading-tight">${label}</span>`;
+            el.style.background = "#334155";
+            el.style.pointerEvents = "none";
+            document.getElementById('scoreA').innerText = scores.A;
+            document.getElementById('scoreB').innerText = scores.B;
+            if(picked.A && picked.B) {
+                setTimeout(() => {
+                    document.getElementById('bonus-overlay').style.display = 'none';
+                    resetChests();
+                    spawnRound();
+                }, 2000);
+            }
+        }
+
+        function resetChests() {
+            document.querySelectorAll('.chest-box').forEach(c => {
+                c.innerHTML = '🎁';
+                c.style.background = '#1e293b';
+                c.style.pointerEvents = "auto";
+            });
+        }
+
+        function showExplosion(x, y, text) {
+            const e = document.createElement('div');
+            e.className = 'explosion';
+            e.style.left = x + 'px';
+            e.style.top = y + 'px';
+            e.innerText = text;
+            document.body.appendChild(e);
+            setTimeout(() => e.remove(), 800);
+        }
+    </script>
+</body>
+</html>
