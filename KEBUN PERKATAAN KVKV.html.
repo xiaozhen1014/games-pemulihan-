@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kebun Pintar KVKV - Fokus Pendengaran</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --blue-team: #3abff8;
+            --red-team: #f87272;
+            --grass-top: #bbf7d0;
+            --grass-bottom: #22c55e;
+        }
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            overflow: hidden;
+            background: #a7f3d0;
+            user-select: none;
+            -webkit-user-select: none;
+            margin: 0;
+            touch-action: manipulation;
+        }
+
+        /* 游戏封面样式 */
+        #game-cover {
+            position: fixed;
+            inset: 0;
+            z-index: 5000;
+            background: linear-gradient(to bottom, #7dd3fc, #22c55e);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            transition: transform 0.8s cubic-bezier(0.77, 0, 0.175, 1);
+        }
+
+        .cover-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: 5rem;
+            color: white;
+            text-shadow: 0 8px 0 #15803d, 0 15px 30px rgba(0,0,0,0.3);
+            margin-bottom: 2rem;
+            animation: bounce 2s infinite;
+        }
+
+        .start-btn {
+            background: #fbbf24;
+            color: #92400e;
+            font-family: 'Fredoka One', cursive;
+            font-size: 2.5rem;
+            padding: 1.5rem 4rem;
+            border-radius: 50px;
+            border: 6px solid white;
+            box-shadow: 0 10px 0 #d97706, 0 20px 40px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .start-btn:hover { transform: scale(1.05); background: #fcd34d; }
+        .start-btn:active { transform: translateY(8px); box-shadow: 0 2px 0 #d97706; }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .garden-bg {
+            background: linear-gradient(to bottom, #7dd3fc 0%, #7dd3fc 30%, var(--grass-top) 30%, var(--grass-bottom) 100%);
+            position: relative;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .cloud {
+            position: absolute;
+            background: white;
+            border-radius: 50px;
+            opacity: 0.8;
+            animation: moveCloud 20s linear infinite;
+        }
+
+        @keyframes moveCloud {
+            from { left: -150px; }
+            to { left: 100%; }
+        }
+
+        .split-screen {
+            display: flex;
+            height: 100%;
+        }
+
+        .team-side {
+            flex: 1;
+            position: relative;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            padding: 120px 30px 40px 30px;
+            gap: 25px;
+            z-index: 10;
+        }
+
+        .team-blue { background: rgba(58, 191, 248, 0.15); border-right: 6px dashed rgba(255,255,255,0.5); }
+        .team-red { background: rgba(248, 114, 114, 0.15); }
+
+        .hole {
+            position: relative;
+            background: #78350f;
+            border-radius: 50%;
+            border: 8px solid #451a03;
+            box-shadow: inset 0 10px 20px rgba(0,0,0,0.6);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mole {
+            position: absolute;
+            bottom: -110%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 85%;
+            height: 95%;
+            background: #fbbf24;
+            border-radius: 60% 60% 30% 30%;
+            transition: bottom 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 4px solid #d97706;
+        }
+
+        .mole.up { bottom: -10%; }
+
+        .eye {
+            width: 14px;
+            height: 14px;
+            background: #1f2937;
+            border-radius: 50%;
+            margin: 0 8px;
+            position: relative;
+        }
+        .eye::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 5px;
+            height: 5px;
+            background: white;
+            border-radius: 50%;
+        }
+
+        .nose {
+            width: 18px;
+            height: 12px;
+            background: #ef4444;
+            border-radius: 10px;
+            margin-top: 5px;
+        }
+
+        .word-tag {
+            background: #fff;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-weight: 800;
+            font-size: 1.8rem;
+            color: #1e3a8a;
+            margin-top: 10px;
+            box-shadow: 0 4px 0 #cbd5e1;
+            font-family: 'Fredoka One', cursive;
+            z-index: 20;
+            border: 3px solid #3b82f6;
+        }
+
+        .score-board {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            display: flex;
+            gap: 20px;
+        }
+
+        .score-card {
+            background: white;
+            padding: 10px 30px;
+            border-radius: 30px;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 4px solid white;
+        }
+        .score-card.blue { border-color: var(--blue-team); color: var(--blue-team); }
+        .score-card.red { border-color: var(--red-team); color: var(--red-team); }
+
+        .audio-indicator {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(5px);
+            padding: 10px 30px;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            font-weight: bold;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .chest-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        .chest-container {
+            display: flex;
+            gap: 40px;
+            margin-top: 40px;
+        }
+
+        .chest-item {
+            width: 220px;
+            height: 220px;
+            background: #8b4513;
+            border: 10px solid #ffd700;
+            border-radius: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 100px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 20px 0 #5d2e0c;
+        }
+
+        .chest-item.revealed {
+            background: #fff;
+            border-color: #22c55e;
+        }
+
+        .floating-score {
+            position: absolute;
+            font-family: 'Fredoka One', cursive;
+            font-size: 4rem;
+            pointer-events: none;
+            z-index: 1000;
+            -webkit-text-stroke: 2px white;
+            animation: popUp 0.8s ease-out forwards;
+        }
+
+        @keyframes popUp {
+            0% { transform: scale(0.5) translateY(0); opacity: 0; }
+            50% { transform: scale(1.2) translateY(-50px); opacity: 1; }
+            100% { transform: scale(1) translateY(-120px); opacity: 0; }
+        }
+
+        .winner-banner {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 40px 80px;
+            border-radius: 50px;
+            border: 8px solid currentColor;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 游戏封面层 -->
+    <div id="game-cover">
+        <h1 class="cover-title">KEBUN PINTAR<br>KVKV</h1>
+        <p class="text-white text-2xl font-bold mb-12 drop-shadow-lg">Dengar & Cari Perkataan Betul!</p>
+        <button class="start-btn" onclick="startGame()">MULAKAN PERMAINAN</button>
+    </div>
+
+    <div class="garden-bg">
+        <div class="cloud w-32 h-12 top-10" style="animation-delay: 0s;"></div>
+        <div class="cloud w-48 h-16 top-24" style="animation-delay: -5s;"></div>
+        <div class="cloud w-40 h-14 top-48" style="animation-delay: -12s;"></div>
+
+        <div class="score-board">
+            <div class="score-card blue">
+                <span class="text-sm font-bold uppercase tracking-wider">Pasukan Biru</span>
+                <span id="score-blue" class="text-4xl font-bold">0</span>
+            </div>
+            <div class="score-card red">
+                <span class="text-sm font-bold uppercase tracking-wider">Pasukan Merah</span>
+                <span id="score-red" class="text-4xl font-bold">0</span>
+            </div>
+        </div>
+
+        <div class="audio-indicator">
+            <span>🔊</span>
+            <span class="text-lg">Dengar Bunyi</span>
+        </div>
+
+        <div class="split-screen">
+            <div class="team-side team-blue" id="grid-blue">
+                <div class="hole"><div class="mole" onclick="whack(event, 'blue')"><div class="flex"><div class="eye"></div><div class="eye"></div></div><div class="nose"></div><div class="word-tag"></div></div></div>
+                <div class="hole"><div class="mole" onclick="whack(event, 'blue')"><div class="flex"><div class="eye"></div><div class="eye"></div></div><div class="nose"></div><div class="word-tag"></div></div></div>
+                <div class="hole"><div class="mole" onclick="whack(event, 'blue')"><div class="flex"><div class="eye"></div><div class="eye"></div></div><div class="nose"></div><div class="word-tag"></div></div></div>
+                <div class="hole"><div class="mole" onclick="whack(event, 'blue')"><div class="flex"><div class="eye"></div><div class="eye"></div></div><div class="nose"></div><div class="word-tag"></div></div></div>
+                <div class="hole"><div class="mole" onclick="whack(event, 'blue')"><div class="flex"><div class="eye"></div><div class="eye"></div></div><div class="nose"></div><div class="word-tag"></div></div></div>
+                <div class="hole"><div class="mole" onclick="whack(event, 'blue')"><div class="flex"><div class="eye"></div><div class="eye"></div></div><div class="nose"></div><div class="word-tag"></div></div></div>
+            </div>
+
+            <div class="team-side team-red" id="grid-red">
+                <div class="hole"><div class="mole" onclick="whack(event, 'red')"><div class="flex"><div class="eye"></div><div class="eye"></div></div><div class="nose"></div><div class="word-tag"></div></div></div>
+                <div class="hole"><div class="mole" onclick="whack(event, 'red')"><div class="flex"><div class="eye"></div><div class="eye"></div></div><div class="nose"></div><div class="word-tag"></div></div></div>
+                <div class="hole"><div class="mole" onclick="whack(event, 'red')"><div class="flex"><div class="eye"></div><div class="eye"></div></div><div class="nose"></div><div class="word-tag"></div></div></div>
+                <div class="hole"><div class="mole" onclick="whack(event, 'red')"><div class="flex"><div class="eye"></div><div class="eye"></div></div><div class="nose"></div><div class="word-tag"></div></div></div>
+                <div class="hole"><div class="mole" onclick="whack(event, 'red')"><div class="flex"><div class="eye"></div><div class="eye"></div></div><div class="nose"></div><div class="word-tag"></div></div></div>
+                <div class="hole"><div class="mole" onclick="whack(event, 'red')"><div class="flex"><div class="eye"></div><div class="eye"></div></div><div class="nose"></div><div class="word-tag"></div></div></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="chest-overlay" class="chest-overlay">
+        <h2 id="chest-title" class="text-7xl font-black text-yellow-400 italic mb-4">MASA BONUS!</h2>
+        <p id="chest-instruction" class="text-4xl text-white font-bold mb-12 uppercase tracking-wide"></p>
+        <div class="chest-container">
+            <div class="chest-item" onclick="openChest(0)">🎁</div>
+            <div class="chest-item" onclick="openChest(1)">🎁</div>
+            <div class="chest-item" onclick="openChest(2)">🎁</div>
+        </div>
+    </div>
+
+    <div id="win-screen" class="fixed inset-0 bg-black/95 z-[3000] hidden flex-col items-center justify-center text-center">
+        <div id="win-banner" class="winner-banner">
+            <h2 id="win-title" class="text-9xl font-black mb-8 uppercase italic">MENANG!</h2>
+            <p class="text-3xl text-white mb-12 font-bold">Tahniah! Permainan Tamat.</p>
+            <button onclick="location.reload()" class="bg-green-500 text-white px-16 py-6 rounded-full text-5xl font-bold shadow-2xl hover:scale-110 transition-transform">MAIN LAGI</button>
+        </div>
+    </div>
+
+    <script>
+        const words = ["buku", "sudu", "topi", "nasi", "cili", "bola", "siku", "dadu", "baju", "tali", "meja", "gigi", "bata", "bahu", "beca", "teko", "kopi", "roti"];
+        let currentTarget = "";
+        let scores = { blue: 0, red: 0 };
+        let isGameActive = false; // 初始设为 false，点击封面才开始
+        let chestActiveTeam = "";
+        let chestRewards = [];
+        
+        const synth = window.speechSynthesis;
+        let audioCtx;
+        let bgMusicStarted = false;
+
+        function startGame() {
+            // 隐藏封面
+            document.getElementById('game-cover').style.transform = 'translateY(-100%)';
+            isGameActive = true;
+            
+            // 初始化音频
+            startBackgroundMusic();
+            updateTarget();
+            
+            // 立即朗读第一个目标
+            setTimeout(() => speakTarget(), 500);
+            
+            // 启动地鼠循环
+            setInterval(gameLoop, 2600);
+        }
+
+        function startBackgroundMusic() {
+            if (bgMusicStarted) return;
+            bgMusicStarted = true;
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            function playKick(time) {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.frequency.setValueAtTime(180, time);
+                osc.frequency.exponentialRampToValueAtTime(0.01, time + 0.15);
+                gain.gain.setValueAtTime(0.4, time);
+                gain.gain.exponentialRampToValueAtTime(0.01, time + 0.15);
+                osc.start(time); osc.stop(time + 0.15);
+            }
+
+            function playTamtam(time) {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.frequency.setValueAtTime(220, time);
+                gain.gain.setValueAtTime(0.08, time);
+                gain.gain.exponentialRampToValueAtTime(0.01, time + 0.2);
+                osc.start(time); osc.stop(time + 0.2);
+            }
+
+            function playTick(time) {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'square';
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.frequency.setValueAtTime(1200, time);
+                gain.gain.setValueAtTime(0.02, time);
+                gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
+                osc.start(time); osc.stop(time + 0.05);
+            }
+
+            let nextNoteTime = audioCtx.currentTime;
+            function scheduler() {
+                while (nextNoteTime < audioCtx.currentTime + 0.1) {
+                    if (isGameActive) {
+                        playKick(nextNoteTime);
+                        playTick(nextNoteTime + 0.1); 
+                        playTamtam(nextNoteTime + 0.2);
+                        playTick(nextNoteTime + 0.3);
+                    }
+                    nextNoteTime += 0.4;
+                }
+                setTimeout(scheduler, 25);
+            }
+            scheduler();
+        }
+
+        function speak(text) {
+            const utter = new SpeechSynthesisUtterance(text);
+            const voices = synth.getVoices();
+            const malayVoice = voices.find(v => 
+                v.lang.startsWith('ms') || 
+                v.lang.includes('Malay') || 
+                v.lang.startsWith('id')
+            );
+            
+            if (malayVoice) utter.voice = malayVoice;
+            utter.lang = 'ms-MY';
+            utter.rate = 0.8;
+            utter.pitch = 1.0;
+            
+            synth.cancel();
+            synth.speak(utter);
+        }
+
+        function speakTarget() {
+            if (currentTarget && isGameActive) speak(currentTarget);
+        }
+
+        function updateTarget() {
+            currentTarget = words[Math.floor(Math.random() * words.length)];
+            if (bgMusicStarted && isGameActive) {
+                setTimeout(() => speakTarget(), 200);
+            }
+        }
+
+        function gameLoop() {
+            if (!isGameActive) return;
+            document.querySelectorAll('.mole').forEach(m => m.classList.remove('up'));
+            setTimeout(() => {
+                if (!isGameActive) return;
+                refreshSide('blue');
+                refreshSide('red');
+                if (bgMusicStarted) speakTarget(); 
+            }, 400);
+        }
+
+        function refreshSide(team) {
+            const moles = document.querySelectorAll(`#grid-${team} .mole`);
+            const correctIdx = Math.floor(Math.random() * moles.length);
+            moles.forEach((mole, idx) => {
+                const tag = mole.querySelector('.word-tag');
+                if (idx === correctIdx) {
+                    tag.innerText = currentTarget;
+                    mole.dataset.word = currentTarget;
+                } else {
+                    let w;
+                    do { w = words[Math.floor(Math.random() * words.length)]; } while(w === currentTarget);
+                    tag.innerText = w;
+                    mole.dataset.word = w;
+                }
+                setTimeout(() => { if(isGameActive) mole.classList.add('up'); }, Math.random() * 800);
+            });
+        }
+
+        function whack(e, team) {
+            if (!isGameActive) return;
+            const mole = e.currentTarget;
+            if (!mole.classList.contains('up')) return;
+            
+            const hitWord = mole.dataset.word;
+            mole.classList.remove('up');
+
+            if (hitWord === currentTarget) {
+                const prevScore = scores[team];
+                scores[team] += 20;
+                playSfx(true);
+                showFloatingText("+20", team, e.pageX, e.pageY, "#22c55e");
+                updateUI();
+
+                if (Math.floor(scores[team] / 100) > Math.floor(prevScore / 100)) {
+                    triggerChest(team);
+                    return;
+                }
+                updateTarget();
+            } else {
+                scores[team] = Math.max(0, scores[team] - 10);
+                playSfx(false);
+                showFloatingText("-10", team, e.pageX, e.pageY, "#ef4444");
+                updateUI();
+                speakTarget();
+            }
+            checkWinner();
+        }
+
+        function triggerChest(team) {
+            isGameActive = false;
+            chestActiveTeam = team;
+            
+            const rewardsPool = [
+                { id: 'double', text: 'DOUBLE SCORE', icon: '🔥', detail: 'Markah x2!' },
+                { id: 'minus', text: 'OOPS! -10', icon: '😢', detail: 'Alahai! Tolak 10 markah.' },
+                { id: 'steal', text: 'STEAL SCORE!', icon: '😈', detail: 'Hebat! Semua markah lawan dicuri!' }
+            ];
+            chestRewards = rewardsPool.sort(() => Math.random() - 0.5);
+
+            const overlay = document.getElementById('chest-overlay');
+            const inst = document.getElementById('chest-instruction');
+            const teamName = team === 'blue' ? 'Pasukan Biru' : 'Pasukan Merah';
+            const teamColor = team === 'blue' ? '#3abff8' : '#f87272';
+            
+            inst.innerHTML = `<span style="color:${teamColor}">${teamName}</span>: Sila Pilih Satu Kotak!`;
+            
+            document.querySelectorAll('.chest-item').forEach(item => {
+                item.innerText = '🎁';
+                item.classList.remove('revealed');
+                item.style.pointerEvents = 'auto';
+            });
+
+            overlay.style.display = 'flex';
+        }
+
+        function openChest(index) {
+            const items = document.querySelectorAll('.chest-item');
+            const reward = chestRewards[index];
+            const otherTeam = chestActiveTeam === 'blue' ? 'red' : 'blue';
+
+            items.forEach(item => item.style.pointerEvents = 'none');
+            items[index].innerText = reward.icon;
+            items[index].classList.add('revealed');
+            
+            setTimeout(() => {
+                if (reward.id === 'double') scores[chestActiveTeam] *= 2;
+                else if (reward.id === 'minus') scores[chestActiveTeam] = Math.max(0, scores[chestActiveTeam] - 10);
+                else if (reward.id === 'steal') { scores[chestActiveTeam] += scores[otherTeam]; scores[otherTeam] = 0; }
+                updateUI();
+                document.getElementById('chest-overlay').style.display = 'none';
+                isGameActive = true;
+                updateTarget();
+                checkWinner();
+            }, 800);
+        }
+
+        function playSfx(correct) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            if (correct) {
+                osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1000, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            } else {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(80, audioCtx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            }
+            osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+        }
+
+        function showFloatingText(text, team, x, y, color) {
+            const el = document.createElement('div');
+            el.className = 'floating-score';
+            el.innerText = text;
+            el.style.left = `${x}px`; el.style.top = `${y}px`; el.style.color = color;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 800);
+        }
+
+        function updateUI() {
+            document.getElementById('score-blue').innerText = scores.blue;
+            document.getElementById('score-red').innerText = scores.red;
+        }
+
+        function checkWinner() {
+            if (scores.blue >= 500 || scores.red >= 500) {
+                isGameActive = false;
+                const winScreen = document.getElementById('win-screen');
+                const winTitle = document.getElementById('win-title');
+                const winBanner = document.getElementById('win-banner');
+                const winner = scores.blue >= 500 ? 'BIRU' : 'MERAH';
+                winTitle.innerText = `${winner} MENANG!`;
+                winBanner.style.color = winner === 'BIRU' ? '#3abff8' : '#f87272';
+                winScreen.style.display = 'flex';
+            }
+        }
+
+        // 预载语音
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = () => synth.getVoices();
+        }
+    </script>
+</body>
+</html>
